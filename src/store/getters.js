@@ -1,0 +1,1 @@
+export const setData = (state) => state.items;

@@ -1,4 +1,4 @@
-import app from './index'
+import app from '../firebase/'
 import { getFirestore, 
         collection, 
         addDoc,
@@ -11,53 +11,64 @@ import { getFirestore,
 const db = getFirestore(app)
 const collectioRef = collection(db, 'users')
 
-export const addNewUser = async(user) => {
+export const addNewUser = async({commit}, user) => {
     try {
 
         const { email, pass } = user
 
-        const response = await addDoc(collectioRef, {
+        const { id } = await addDoc(collectioRef, {
             email,
             pass
         })
 
-        console.log(response)
+        const docRef = doc(db, 'users', id)
+        const docSnap = await getDoc(docRef)
+
+        commit('addNewItem', docSnap.data())
     } catch (error) {
         console.log(error.message)
     }
 }
 
-export const getData = async() => {
+export const getData = async( {commit} ) => {
     try {
         const querySnapshot = await getDocs(collection(db, 'users'))
 
-        return querySnapshot.docs.map((item) => {
+        const items = querySnapshot.docs.map((item) => {
             const newData = { ...item.data(), id: item.id }
             return newData
         })
+
+        commit('newItems', items)
+
     } catch (error) {
         console.log(error.message)
     }
 }
 
-export const getOneDocument = async(id) => {
+export const getOneDocument = async({commit} , id) => {
     try {        
         const docRef = doc(db, 'users', id)
         const docSnap = await getDoc(docRef)
+        const item = { ...docSnap.data(), id }
         
-        return { ...docSnap.data(), id }
+        commit('getItem', item)
+        return item
     } catch (error) {
         console.log(error.message)
     }
 }
 
-export const updateData = async( { email, pass, id } ) => {
+export const updateData = async( {commit}, data ) => {
     try {
+        const { id, email, pass } = data
         const docRef = doc(db, 'users', id)
         await updateDoc(docRef, {
             email,
             pass
         })
+
+        commit('updateItem', data)
         
     } catch (error) {
         console.log(error)

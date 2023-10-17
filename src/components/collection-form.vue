@@ -15,7 +15,7 @@
     </form>
     <ul>
         <li
-        v-for="item in items"
+        v-for="item in setItems"
         :key="item.id"
         >
             <p>{{item.email}}</p>
@@ -33,11 +33,12 @@
 </template>
 
 <script>
-import { addNewUser, getData, getOneDocument, updateData } from '@/firebase/firestore'
-import { reactive, ref } from 'vue';
+import { reactive, ref, computed } from 'vue';
+import { useStore } from 'vuex';
 
 export default {
     setup() {
+        const store = useStore()
         const user = reactive({})
         const email = ref()
         const pass = ref()
@@ -46,7 +47,7 @@ export default {
         const itemUpdate = reactive({})
 
         const getAllData = async() => {
-            items.value = await getData()
+            items.value = await store.dispatch('getData')
         }
 
         getAllData()
@@ -58,22 +59,22 @@ export default {
             items,
             itemUpdate,
             update,
+            setItems: computed(() => store.getters['setData']),
             newUser: async () => {
                 user.email = email.value;
                 user.pass = pass.value
 
-                await addNewUser(user)
+                await store.dispatch('addNewUser', user)
             },
             selectItem: async (data) => {
                 update.value = true
-                const { email, pass, id } = await getOneDocument(data)
+                const { email, pass, id } = await store.dispatch('getOneDocument', data)
                 itemUpdate.email = email
                 itemUpdate.pass = pass
                 itemUpdate.id = id
             },
             updateItem: async ( data ) => {
-                await updateData(data)
-                await getData()
+                await store.dispatch('updateData', data)
                 update.value = false
             }
         }
